@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nemyplish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:wght@400;600&display=swap">
+<style>
+/* Layout: una columna, bloques separados por filetes negros, un visual generativo monocromo por mundo. Sin color: solo negro y blanco. */
+:root {
+  --bg: #ffffff;
+  --fg: #000000;
+  --muted: #666666;
+  --line: #d6d6d6;
+  --line-strong: #000000;
+  --inv-bg: #000000;
+  --inv-fg: #ffffff;
+  --err: #c00000;
+  --r-md: 16px;
+  --r-lg: 28px;
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000; --fg: #ffffff; --muted: #9a9a9a; --line: #2c2c2c; --line-strong: #ffffff;
+    --inv-bg: #ffffff; --inv-fg: #000000; --err: #ff7a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --fg: #ffffff; --muted: #9a9a9a; --line: #2c2c2c; --line-strong: #ffffff;
+  --inv-bg: #ffffff; --inv-fg: #000000; --err: #ff7a7a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-sans); font-size: 15px; line-height: 1.55;
+  padding-inline: 16px; padding-block: 20px calc(96px + env(safe-area-inset-bottom, 0px));
+}
+#app { max-width: 720px; margin-inline: auto; display: flex; flex-direction: column; gap: 32px; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+h1 { font-stretch: 112%; font-weight: 800; font-size: clamp(34px, 10vw, 56px); line-height: .98; letter-spacing: -.025em; text-transform: uppercase; }
+h2 { font-stretch: 106%; font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -.012em; text-wrap: balance; overflow-wrap: anywhere; }
+.mono { font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.wordmark { font-stretch: 125%; font-weight: 900; font-size: 18px; letter-spacing: .12em; }
+
+.hero { position: relative; width: 100%; min-width: 0; background: var(--inv-bg); color: var(--inv-fg); aspect-ratio: 16 / 10; min-height: 250px; max-height: 380px; padding: 20px; border-radius: var(--r-lg); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-row { position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.hero-row.top { align-items: flex-start; }
+.big { font-stretch: 125%; font-weight: 900; font-size: clamp(54px, 16vw, 92px); line-height: .86; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.big.sm { font-size: clamp(30px, 8vw, 44px); }
+.hero .right { text-align: right; }
+.segs { display: flex; gap: 4px; margin-top: 8px; }
+.segs i { flex: 1; height: 6px; border-radius: 999px; background: var(--line); }
+.segs i.done { background: var(--fg); }
+.segs i.now { background: var(--fg); opacity: .35; }
+
+.block { border-top: 1px solid var(--line-strong); padding-top: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.chip { align-self: flex-start; border: 1px solid var(--fg); border-radius: 999px; padding: 3px 12px; overflow-wrap: anywhere; }
+.mark { width: 34px; height: 34px; flex: none; border-radius: 12px; display: grid; place-items: center; background: var(--fg); color: var(--bg); font-stretch: 125%; font-weight: 900; font-size: 15px; }
+.nemy { display: flex; align-items: center; gap: 12px; }
+.nemy b { display: block; line-height: 1.2; }
+
+input[type="text"], input[type="email"], textarea { width: 100%; font: inherit; font-size: 16px; color: var(--fg); padding: 12px 16px; border: 1px solid var(--fg); border-radius: var(--r-md); background: transparent; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+.btn { width: 100%; font: inherit; font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--bg); background: var(--fg); border: 1px solid var(--fg); border-radius: 999px; padding: 14px 24px; cursor: pointer; }
+.btn:hover:not(:disabled) { background: var(--bg); color: var(--fg); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.quiet { color: var(--fg); background: transparent; }
+.btn.quiet:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+.btn.small-btn { width: auto; align-self: flex-start; padding: 9px 16px; font-size: 14px; }
+.btn.danger { border-color: var(--err); background: var(--err); color: var(--bg); }
+.link { align-self: flex-start; font: inherit; font-size: 13px; font-weight: 600; color: var(--fg); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.link:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 10px; }
+.row > * { min-width: 0; }
+.row .btn { width: auto; flex: none; }
+.row input { flex: 1; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+
+.topics, .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tchip, .opt { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--fg); cursor: pointer; padding: 7px 14px; border: 1px solid var(--line-strong); border-radius: 999px; background: transparent; }
+.tchip:hover, .opt:hover { background: var(--fg); color: var(--bg); }
+.opt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+.steps { list-style: none; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.steps li { border-bottom: 1px solid var(--line); }
+.steps label { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; cursor: pointer; font-weight: 600; }
+.steps input { appearance: none; -webkit-appearance: none; flex: none; width: 20px; height: 20px; margin: 2px 0 0; border: 1.5px solid var(--fg); border-radius: 7px; background: transparent; display: grid; place-content: center; cursor: pointer; }
+.steps input:checked { background: var(--fg); }
+.steps input:checked::after { content: ""; width: 10px; height: 5px; border-left: 2px solid var(--bg); border-bottom: 2px solid var(--bg); transform: rotate(-45deg) translate(1px, -1px); }
+.steps input:checked + span { color: var(--muted); text-decoration: line-through; }
+
+.chatlog { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.msg { max-width: 90%; padding: 10px 16px; border-radius: 20px; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.assistant { align-self: flex-start; border: 1px solid var(--fg); border-bottom-left-radius: 6px; }
+.msg.user { align-self: flex-end; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; }
+.dots { display: inline-flex; gap: 4px; padding-block: 4px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg); animation: blink 1s infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes blink { 0%,60%,100% { opacity: .2; } 30% { opacity: 1; } }
+.status { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.err { font-size: 13px; font-weight: 600; color: var(--err); }
+.err:empty { display: none; }
+.notice { border: 1px solid var(--fg); border-radius: var(--r-md); padding: 14px 16px; }
+.notice b { display: block; }
+
+.gain { font-stretch: 125%; font-weight: 900; font-size: clamp(70px, 24vw, 128px); line-height: .85; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.why { padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-md); }
+
+.mods { list-style: none; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.mod { padding: 18px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.mod-head { display: flex; gap: 16px; align-items: flex-start; }
+.mod-n { flex: none; width: 40px; font-stretch: 125%; font-weight: 900; font-size: 26px; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.mod-head b { display: block; line-height: 1.3; overflow-wrap: anywhere; }
+.reading { display: flex; flex-direction: column; gap: 14px; font-family: var(--font-serif); font-size: 17px; line-height: 1.7; max-width: 62ch; padding-left: 56px; overflow-wrap: anywhere; }
+.reading:empty { display: none; }
+.mod > :not(.mod-head):not(.reading) { margin-left: 56px; }
+.buy { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.price b { display: block; font-stretch: 125%; font-weight: 900; font-size: 52px; line-height: .9; letter-spacing: -.04em; }
+.buy .btn { width: auto; flex: 1 1 220px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--fg); border-radius: var(--r-md); overflow: hidden; }
+.stat { padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.stat + .stat { border-left: 1px solid var(--fg); }
+.stat b { font-stretch: 118%; font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.log { list-style: none; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.log li { padding: 14px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.setting { display: flex; flex-direction: column; gap: 10px; }
+.setting + .setting { border-top: 1px solid var(--line); padding-top: 18px; }
+
+.auth { min-height: 70vh; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+.auth h1 { font-size: clamp(44px, 14vw, 84px); }
+
+.tabbar { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: 696px; margin-inline: auto; z-index: 5; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px; }
+.tabbar-in { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.tab { position: relative; font: inherit; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: none; border: 0; padding: 9px 4px 8px; border-radius: 999px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
+.tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: square; stroke-linejoin: miter; }
+.tab[aria-current="page"] { color: var(--bg); background: var(--fg); }
+
+.travel { position: fixed; inset: 0; z-index: 10; display: grid; align-content: end; padding: 24px; background: var(--inv-bg); color: var(--inv-fg); animation: fade .35s ease both; }
+.travel .big { font-size: clamp(48px, 15vw, 120px); line-height: .9; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.foot { align-self: center; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--muted); background: none; border: 0; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; padding: 6px; }
+@media (max-width: 480px) { .reading { padding-left: 0; } .mod > :not(.mod-head):not(.reading) { margin-left: 0; } }
+@media (prefers-reduced-motion: reduce) { .dots i, .travel { animation: none; } }
+
+/* ---- Capa visual ---- */
+.hero { aspect-ratio: 4 / 3; min-height: 300px; max-height: 460px; }
+.orb { flex: none; display: block; color: var(--fg); }
+.orb .orbit, .orb .ring { transform-origin: 24px 24px; }
+.orb .orbit { animation: spin 6s linear infinite; }
+.orb .ring { animation: spin 24s linear infinite reverse; }
+.orb .core { transform-origin: 24px 24px; animation: breathe 3s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes breathe { 50% { transform: scale(1.5); } }
+.hello { display: flex; align-items: flex-end; gap: 14px; }
+.bubble { position: relative; border: 1px solid var(--fg); border-radius: 22px; border-bottom-left-radius: 6px; padding: 14px 18px; font-weight: 600; font-size: 15px; line-height: 1.4; }
+.map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.world { position: relative; overflow: hidden; min-width: 0; aspect-ratio: 3 / 4; border: 1px solid var(--line-strong); border-radius: var(--r-lg); display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; color: var(--fg); background: var(--bg); }
+.world canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.world.now { background: var(--inv-bg); color: var(--inv-fg); }
+.world.todo { border-color: var(--line); }
+.world.todo canvas { opacity: .4; }
+.wl { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--r-md); background: var(--bg); color: var(--fg); min-width: 0; }
+.world.now .wl { background: var(--inv-bg); color: var(--inv-fg); }
+.wl b { font-stretch: 100%; font-weight: 800; font-size: 12px; line-height: 1.1; letter-spacing: -.02em; }
+.pips { display: flex; gap: 3px; }
+.pips i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; }
+.pips i.on { background: currentColor; }
+.pop { position: relative; overflow: hidden; border-radius: var(--r-lg); background: var(--inv-bg); color: var(--inv-fg); padding: 22px; min-height: 220px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; }
+.pop i { position: absolute; right: -8%; top: 50%; width: 62%; aspect-ratio: 1; margin-top: -31%; border-radius: 50%; border: 1px solid currentColor; opacity: 0; animation: ring 3s ease-out infinite; }
+.pop i:nth-child(2) { animation-delay: 1s; } .pop i:nth-child(3) { animation-delay: 2s; }
+@keyframes ring { from { transform: scale(.2); opacity: .8; } to { transform: scale(1.9); opacity: 0; } }
+.pop > :not(i) { position: relative; }
+.steps { border-top: 0; gap: 8px; }
+.steps li { border: 1px solid var(--line-strong); border-radius: var(--r-md); }
+.steps li:has(input:checked) { border-color: var(--line); }
+.steps label { padding: 14px 16px; }
+.mods { border-top: 0; gap: 10px; }
+.mod { border: 1px solid var(--line-strong); border-radius: var(--r-lg); padding: 18px; }
+.mod-n { font-size: 34px; width: 48px; }
+.log { border-top: 0; gap: 8px; }
+.log li { border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+.lvgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.lvgrid i { aspect-ratio: 1; border-radius: 16px; border: 1px solid var(--line); display: grid; place-items: center; font-style: normal; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.lvgrid i.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.lvgrid i.cur { border: 2px solid var(--fg); color: var(--fg); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(.92); } }
+@media (prefers-reduced-motion: reduce) { .orb .orbit, .orb .ring, .orb .core, .pop i, .lvgrid i.cur { animation: none; } }
+</style>
+
+</head>
+<body>
+<main id="app"></main>
+<nav class="tabbar" id="tabbar" aria-label="Menú principal" hidden><div class="tabbar-in" id="tabs"></div></nav>
+
+<script>
+(function () {
+  var CONFIG = { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };
+
+  var Prompts = (function () {
+// Prompts y validación de entradas de Nemy.
+// Se usan en la Edge Function `nemy` (servidor) y se incrustan tal cual en el modo demo del frontend.
+// Solo texto y funciones puras. Al incrustarlo en el HTML se eliminan los "export ".
+
+function clip(v, n) {
+  return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
+}
+function list(a, n) { return Array.isArray(a) ? a.slice(0, n) : []; }
+function int(v, min, max, d) {
+  var n = parseInt(v, 10);
+  if (isNaN(n)) return d;
+  return Math.max(min, Math.min(max, n));
+}
+function cleanProfile(p) {
+  p = p && typeof p === 'object' ? p : {};
+  return { level: clip(p.level, 20), time: clip(p.time, 30), aim: clip(p.aim, 140) };
+}
+function cleanLog(a) {
+  return list(a, 15).map(function (l) {
+    l = l || {};
+    return { goal: clip(l.goal, 100), note: clip(l.note, 300), feedback: clip(l.feedback, 200) };
+  });
+}
+function cleanMaster(m) {
+  m = m && typeof m === 'object' ? m : {};
+  return {
+    title: clip(m.title, 90), promise: clip(m.promise, 240), why: clip(m.why, 260),
+    modules: list(m.modules, 5).map(function (x) { x = x || {}; return { t: clip(x.t, 80), d: clip(x.d, 170) }; })
+  };
+}
+function cleanMessages(a) {
+  var out = list(a, 12).map(function (m) {
+    m = m || {};
+    return { role: m.role === 'assistant' ? 'assistant' : 'user', content: clip(m.content, 600) };
+  }).filter(function (m) { return m.content; });
+  while (out.length && out[0].role !== 'user') out.shift();
+  while (out.length && out[out.length - 1].role !== 'user') out.pop();
+  return out;
+}
+
+function sanitize(task, raw) {
+  var r = raw && typeof raw === 'object' ? raw : {};
+  var base = { topic: clip(r.topic, 80), name: clip(r.name, 40), levelLabel: clip(r.levelLabel, 70) };
+  if (task === 'suggest') {
+    return Object.assign(base, { history: list(r.history, 6).map(function (x) { return clip(x, 100); }) });
+  }
+  if (task === 'steps') return Object.assign(base, { goal: clip(r.goal, 100) });
+  if (task === 'evaluate') {
+    return Object.assign(base, {
+      goal: clip(r.goal, 100), note: clip(r.note, 600),
+      steps: list(r.steps, 3).map(function (s) { s = s || {}; return { t: clip(s.t, 120), done: !!s.done }; })
+    });
+  }
+  if (task === 'design_master') {
+    return Object.assign(base, { xp: int(r.xp, 0, 100000, 0), mprofile: cleanProfile(r.mprofile), log: cleanLog(r.log) });
+  }
+  if (task === 'lesson') {
+    return Object.assign(base, {
+      xp: int(r.xp, 0, 100000, 0), mprofile: cleanProfile(r.mprofile), log: cleanLog(r.log),
+      master: cleanMaster(r.master), index: int(r.index, 0, 4, 0)
+    });
+  }
+  if (task === 'chat') {
+    return Object.assign(base, {
+      goal: clip(r.goal, 100),
+      steps: list(r.steps, 3).map(function (s) { s = s || {}; return { t: clip(s.t, 120), done: !!s.done }; }),
+      tone: r.tone === 'directo' ? 'directo' : 'cercano',
+      length: r.length === 'breve' || r.length === 'detallada' ? r.length : 'normal',
+      messages: cleanMessages(r.messages)
+    });
+  }
+  return base;
+}
+
+var BASE = 'Eres Nemy, mentora de una app de aprendizaje por niveles. Escribes en español, con claridad y rigor profesional, sin emojis. ' +
+  'Si no sabes algo, lo dices. Nunca inventas datos, estadísticas, estudios ni fuentes.';
+
+function ctx(i) {
+  return 'Tema: ' + i.topic + '.' + (i.levelLabel ? ' ' + i.levelLabel + '.' : '') + (i.name ? ' La persona se llama ' + i.name + '.' : '');
+}
+function profileBlock(i) {
+  var p = i.mprofile || {};
+  var log = (i.log || []).map(function (l, n) {
+    return (n + 1) + '. Objetivo: ' + l.goal + ' | Lo que contó: ' + l.note + ' | Evaluación de Nemy: ' + l.feedback;
+  }).join('\n') || 'Sin registros.';
+  return 'Tema: ' + i.topic + '.' + (i.name ? ' La persona se llama ' + i.name + '.' : '') +
+    '\nNivel que se atribuye: ' + p.level + '. Tiempo disponible: ' + p.time + '.\nQué quiere conseguir: ' + p.aim +
+    '.\nHistorial del recorrido (' + i.xp + ' XP):\n' + log;
+}
+
+// Devuelve { tier: 'fast'|'smart', json: bool, stream: bool, maxTokens, system, messages }.
+function build(task, i) {
+  if (task === 'suggest') {
+    return {
+      tier: 'fast', json: true, stream: false, maxTokens: 200, system: BASE,
+      messages: [{ role: 'user', content: ctx(i) + ' Propón un objetivo concreto, medible y que se pueda terminar en una sola sesión, adecuado a ese nivel de dificultad. ' +
+        'No repitas estos: ' + ((i.history || []).join(' | ') || 'ninguno') + '. Responde solo con JSON: {"goal":"máximo 14 palabras"}' }]
+    };
+  }
+  if (task === 'steps') {
+    return {
+      tier: 'fast', json: true, stream: false, maxTokens: 300, system: BASE,
+      messages: [{ role: 'user', content: ctx(i) + ' Objetivo: ' + i.goal + '. Da tres pasos concretos y ordenados para lograrlo, cada uno de máximo 12 palabras. ' +
+        'Responde solo con JSON: {"steps":["...","...","..."]}' }]
+    };
+  }
+  if (task === 'evaluate') {
+    var st = (i.steps || []).map(function (s) { return s.t + (s.done ? ' (hecho)' : ' (sin hacer)'); }).join('; ');
+    return {
+      tier: 'smart', json: true, stream: false, maxTokens: 700, system: BASE,
+      messages: [{ role: 'user', content: ctx(i) + '\nObjetivo: ' + i.goal + '\nPasos y estado: ' + st + '\nLo que cuenta el usuario: ' + i.note +
+        '\n\nEvalúa con honestidad. xp es un entero entre 30 y 100: más alto si el relato es concreto y muestra esfuerzo o resultado verificable, más bajo si es vago o los pasos están sin hacer. ' +
+        'feedback: una o dos frases directas sobre qué salió bien y qué mejorar, sin adulación. lesson: una lección breve y correcta (2 o 3 frases) útil para el tema y para el siguiente nivel. ' +
+        'Responde solo con JSON: {"xp":number,"feedback":"...","lesson":{"title":"...","body":"..."}}' }]
+    };
+  }
+  if (task === 'design_master') {
+    return {
+      tier: 'smart', json: true, stream: false, maxTokens: 1200, system: BASE,
+      messages: [{ role: 'user', content: profileBlock(i) +
+        '\n\nDiseña una masterclass de pago personalizada para esta persona. Debe partir de lo que ya hizo y trabajar lo que le falta según las evaluaciones del historial. Nivel avanzado y práctica aplicada. ' +
+        'No prometas resultados garantizados ni cifras de horas, ingresos o plazos. Responde solo con JSON: ' +
+        '{"title":"máximo 8 palabras","promise":"una frase sobre lo que sabrá hacer al terminar","why":"una frase que explique cómo se adapta a esta persona, citando algo concreto de su historial",' +
+        '"modules":[{"t":"título corto","d":"una frase"}]} con exactamente 5 módulos.' }]
+    };
+  }
+  if (task === 'lesson') {
+    var m = i.master, mod = m.modules[i.index] || { t: '', d: '' };
+    return {
+      tier: 'smart', json: false, stream: true, maxTokens: 1400,
+      system: BASE + ' No uses formato markdown (sin asteriscos ni almohadillas). Separa los párrafos con una línea en blanco.',
+      messages: [{ role: 'user', content: profileBlock(i) + '\n\nMasterclass: «' + m.title + '». Módulo ' + (i.index + 1) + ' de ' + m.modules.length + ': «' + mod.t + '» (' + mod.d + ').\n\n' +
+        'Escribe la lección de este módulo para esta persona, de 350 a 450 palabras. Primero explica el concepto aplicándolo a lo que ya hizo y menciona algo concreto de su historial. ' +
+        'Después da tres pasos concretos. Termina con un párrafo que empiece por «Ejercicio:» con una tarea de unos 20 minutos.' }]
+    };
+  }
+  // chat
+  var words = i.length === 'breve' ? 40 : i.length === 'detallada' ? 120 : 70;
+  var tone = i.tone === 'directo' ? 'Sé directo y sin rodeos, sin frases de ánimo de relleno.' : 'Usa un tono cercano y amable.';
+  var steps = (i.steps || []).map(function (s, n) { return (n + 1) + '. ' + s.t + (s.done ? ' (hecho)' : ' (pendiente)'); }).join('\n');
+  return {
+    tier: 'fast', json: false, stream: true, maxTokens: words * 4,
+    system: BASE + ' ' + tone + ' Responde en un máximo de ' + words + ' palabras. Guía con preguntas y pistas concretas; no hagas el trabajo por el usuario.\n' +
+      ctx(i) + '\nObjetivo actual: ' + i.goal + '\nPasos:\n' + steps,
+    messages: i.messages
+  };
+}
+
+// Lee el primer valor JSON de un texto (admite bloques ```json y texto alrededor). Devuelve null si no hay.
+function extractJson(text) {
+  var t = String(text || '').trim();
+  try { return JSON.parse(t); } catch (e) {}
+  var fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) { try { return JSON.parse(fence[1].trim()); } catch (e) {} }
+  var a = t.search(/[\[{]/);
+  var b = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'));
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  return null;
+}
+
+return { sanitize: sanitize, build: build, extractJson: extractJson };
+})();
+
+  var DEMO = !!(window.claude && window.claude.use);
+  var FN_URL = String(CONFIG.SUPABASE_URL).replace(/\/$/, '') + '/functions/v1';
+  var WORLDS = [
+    { name: 'Fundamentos', sub: 'Primeros pasos' },
+    { name: 'Práctica', sub: 'Constancia' },
+    { name: 'Dominio', sub: 'Nivel avanzado' }
+  ];
+  var FALLBACK_STEPS = ['Divide el objetivo en tres partes pequeñas', 'Haz la primera parte en 10 minutos', 'Revisa qué te funcionó y qué no'];
+  var FALLBACK_LESSONS = [
+    ['Concreto gana a vago', 'Un objetivo con acción y plazo claros se cumple más a menudo que una intención general.'],
+    ['Practica recordando', 'Intentar recordar sin mirar los apuntes enseña más que releerlos.'],
+    ['Sesiones cortas', 'Veinticinco minutos sin distracciones suelen rendir más que dos horas dispersas.'],
+    ['Aprende de los fallos', 'Anota qué falló y cambia una sola cosa en el siguiente intento.'],
+    ['Explica con tus palabras', 'Explicar un tema a otra persona revela qué partes aún no dominas.']
+  ];
+  var MASTER_PRICE = '29 €';
+  var TOPICS = ['Idiomas', 'Programación', 'Música', 'Deporte', 'Finanzas', 'Arte y diseño', 'Cocina', 'Escritura'];
+  var LEVELS = ['Principiante', 'Intermedio', 'Avanzado'];
+  var TIMES = ['1–2 h por semana', '3–5 h por semana', '6 h o más por semana'];
+  var DEFAULTS = {
+    topic: '', world: 1, level: 0, phase: 'onboard', goal: '', steps: [], gain: 0, feedback: '', lesson: null, totalXp: 0,
+    history: [], log: [], finished: false, master: null, unlocked: false,
+    name: '', settings: { theme: 'auto', tone: 'cercano', length: 'normal' },
+    mprofile: { level: 'Intermedio', time: '3–5 h por semana', aim: '' }
+  };
+  function fresh() { return JSON.parse(JSON.stringify(DEFAULTS)); }
+  function normalize(o) {
+    var s = Object.assign(fresh(), o || {});
+    if (!Array.isArray(s.log)) s.log = [];
+    if (!Array.isArray(s.history)) s.history = [];
+    if (!s.mprofile || typeof s.mprofile !== 'object') s.mprofile = fresh().mprofile;
+    s.settings = Object.assign({ theme: 'auto', tone: 'cercano', length: 'normal' }, s.settings || {});
+    if (typeof s.name !== 'string') s.name = '';
+    if (s.master && s.master.v !== 2) s.master = null;
+    return s;
+  }
+
+  var S = DEMO ? normalize(readLocal()) : fresh();
+  var view = DEMO ? 'app' : 'boot', tab = 'learn';
+  var sample = null, downloads = null, sb = null, session = null, entitled = false;
+  var draft = { topic: '', goal: '', note: '', chat: '', email: '' };
+  var busy = null, modBusy = null, errMsg = '', completing = false, confirmReset = false, traveling = false, liveText = '';
+  var authSent = false, payNotice = '';
+  var chat = [], chatBusy = false, chatErr = '', ctl = null;
+  var app = document.getElementById('app');
+  var root = document.documentElement;
+  var origTheme = root.getAttribute('data-theme');
+
+  /* ---------- Utilidades ---------- */
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function paras(t) { return String(t || '').split(/\n{2,}/).map(function (p) { p = p.trim(); return p ? '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>' : ''; }).join(''); }
+  function pad(n, w) { return String(n).padStart(w, '0'); }
+  function globalLevel() { return (S.world - 1) * 5 + S.level + 1; }
+  function levelLabel() { return 'Nivel ' + globalLevel() + ' de 15 (mundo ' + S.world + ', nivel ' + (S.level + 1) + ' de 5)'; }
+  function isEntitled() { return DEMO ? !!S.unlocked : entitled; }
+  function copy(code) {
+    if (code === 'not_granted' || code === 'sampling_disabled' || code === 'not_declared') return 'Nemy necesita que permitas a esta página usar Claude. Puedes seguir sin ella.';
+    if (code === 'rate_limited') return DEMO ? 'Se alcanzó un límite de uso. Inténtalo de nuevo más tarde.' : 'Has llegado al límite de consultas de hoy. Vuelve mañana.';
+    if (code === 'payment_required') return 'Esta lección forma parte de la masterclass completa.';
+    if (code === 'session_expired') return 'Tu sesión caducó. Vuelve a iniciar sesión.';
+    if (code === 'master_not_saved') return 'Aún no se guardó tu masterclass. Inténtalo de nuevo en unos segundos.';
+    return 'Nemy no pudo responder esta vez. Inténtalo de nuevo.';
+  }
+  function codeFromStatus(s) { return s === 401 ? 'session_expired' : s === 402 ? 'payment_required' : s === 409 ? 'master_not_saved' : s === 429 ? 'rate_limited' : 'upstream_error'; }
+
+  /* ---------- Persistencia ---------- */
+  function readLocal() { try { var r = localStorage.getItem('nemyplish-v3'); return r ? JSON.parse(r) : {}; } catch (e) { return {}; } }
+  var saveTimer = null, inflight = Promise.resolve();
+  function saveNow() {
+    saveTimer = null;
+    if (DEMO) { try { localStorage.setItem('nemyplish-v3', JSON.stringify(S)); } catch (e) {} return Promise.resolve(); }
+    if (!sb || !session) return Promise.resolve();
+    var snapshot = JSON.parse(JSON.stringify(S));
+    inflight = inflight.then(function () {
+      return sb.from('app_state').upsert({ user_id: session.user.id, state: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    }).catch(function () {});
+    return inflight;
+  }
+  function save() { if (saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, DEMO ? 0 : 700); }
+  function flush() { if (saveTimer) { clearTimeout(saveTimer); return saveNow(); } return inflight; }
+
+  /* ---------- IA: demo (Claude) o backend (Supabase) ---------- */
+  function toTurns(spec) { return [{ role: 'user', content: spec.system }].concat(spec.messages); }
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session ? session.access_token : ''), apikey: CONFIG.SUPABASE_ANON_KEY };
+  }
+  async function callFn(name, body) {
+    var res = await fetch(FN_URL + '/' + name, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    var data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw { code: codeFromStatus(res.status) };
+    return data || {};
+  }
+  async function aiJson(task, input) {
+    if (DEMO) {
+      if (!sample) throw { code: 'not_granted' };
+      var spec = Prompts.build(task, Prompts.sanitize(task, input));
+      return sample.json(toTurns(spec), { modelTier: spec.tier === 'smart' ? 'default' : 'quick', cache: false });
+    }
+    var r = await callFn('nemy', { task: task, input: input });
+    if (r.data == null) throw { code: 'upstream_error' };
+    return r.data;
+  }
+  async function streamFn(task, input, signal, onText) {
+    var res = await fetch(FN_URL + '/nemy', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ task: task, input: input, stream: true }), signal: signal });
+    if (!res.ok) throw { code: codeFromStatus(res.status) };
+    var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', text = '';
+    for (;;) {
+      var r = await reader.read();
+      if (r.done) break;
+      buf += dec.decode(r.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        var block = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        var line = block.split('\n').filter(function (l) { return l.indexOf('data:') === 0; })[0];
+        if (!line) continue;
+        var payload = line.slice(5).trim();
+        if (payload === '[DONE]') continue;
+        var ev; try { ev = JSON.parse(payload); } catch (e) { continue; }
+        if (ev.error) throw { code: 'upstream_error' };
+        if (ev.delta) { text += ev.delta; onText(text); }
+      }
+    }
+    return text;
+  }
+  async function aiStream(task, input, signal, onText) {
+    if (DEMO) {
+      if (!sample) throw { code: 'not_granted' };
+      var spec = Prompts.build(task, Prompts.sanitize(task, input));
+      var r = await sample(toTurns(spec), { cache: false, signal: signal, onText: function (u) { onText(u.text); } });
+      return r.text;
+    }
+    try { return await streamFn(task, input, signal, onText); }
+    catch (e) { if (e && e.name === 'AbortError') throw { code: 'cancelled' }; throw e; }
+  }
+
+  /* ---------- Visual generativo (un patrón monocromo por mundo) ---------- */
+  function art1(g, w, h, p, ph) {
+    var cx = w * 0.72, cy = h * 0.46, max = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
+    var n = Math.round(4 + p * 30), step = max / 34, f = (ph * 0.3) % 1;
+    for (var k = 0; k <= n; k++) { g.globalAlpha = Math.max(0, 0.2 + 0.8 * (1 - (k + f) / (n + 4))); g.beginPath(); g.arc(cx, cy, Math.max(0.1, (k + f) * step), 0, Math.PI * 2); g.stroke(); }
+    g.globalAlpha = 1; g.beginPath(); g.arc(cx, cy, 3.5, 0, Math.PI * 2); g.fill();
+  }
+  function art2(g, w, h, p, ph) {
+    var n = Math.round(8 + p * 34), amp = 4 + p * 26;
+    for (var i = 0; i < n; i++) {
+      var y0 = h * 0.1 + h * 0.8 * i / (n - 1), ph0 = i * 0.32;
+      g.globalAlpha = 0.3 + 0.7 * (i / n);
+      g.beginPath();
+      for (var x = 0; x <= w; x += 4) {
+        var y = y0 + Math.sin(x / w * 7 + ph0 + ph * 0.9) * amp * Math.sin(x / w * Math.PI);
+        if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+  function art3(g, w, h, p, ph) {
+    var gap = 14, cx = w * 0.7, cy = h * 0.5, R = Math.max(w, h) * (0.25 + 0.55 * p);
+    for (var x = gap / 2; x < w; x += gap) {
+      for (var y = gap / 2; y < h; y += gap) {
+        var d = Math.hypot(x - cx, y - cy) / R;
+        if (d > 1) continue;
+        g.beginPath(); g.arc(x, y, (1 - d) * gap * 0.46 * (0.78 + 0.22 * Math.sin(d * 9 - ph * 1.6)) + 0.4, 0, Math.PI * 2); g.fill();
+      }
+    }
+  }
+  var ART = [art1, art2, art3];
+  var reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var heroRaf = 0, heroSt = null, lastT = 0;
+  function heroFrame(now) {
+    heroRaf = 0;
+    var st = heroSt;
+    if (!st || !document.body.contains(st.c)) return;
+    if (now - lastT >= 33 || !lastT) {
+      lastT = now;
+      st.g.clearRect(0, 0, st.w, st.h);
+      ART[S.world - 1](st.g, st.w, st.h, st.p, now / 1000);
+    }
+    if (!reduceMotion) heroRaf = requestAnimationFrame(heroFrame);
+  }
+  function drawHero() {
+    var c = document.getElementById('hero');
+    if (heroRaf) { cancelAnimationFrame(heroRaf); heroRaf = 0; }
+    if (!c) { heroSt = null; return; }
+    var box = c.parentNode, w = box.clientWidth, h = box.clientHeight;
+    if (!w || !h) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    var g = c.getContext('2d');
+    g.scale(dpr, dpr);
+    var ink = getComputedStyle(box).color;
+    g.strokeStyle = ink; g.fillStyle = ink; g.lineWidth = 1;
+    var done = S.finished ? 5 : S.level + (S.phase === 'reward' ? 1 : 0);
+    heroSt = { c: c, g: g, w: w, h: h, p: 0.12 + 0.88 * Math.min(1, done / 5) };
+    lastT = 0;
+    heroFrame(performance.now());
+  }
+  function drawMaps() {
+    document.querySelectorAll('canvas.wc').forEach(function (c) {
+      var box = c.parentNode, w = box.clientWidth, h = box.clientHeight;
+      if (!w || !h) return;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      var g = c.getContext('2d');
+      g.scale(dpr, dpr);
+      var ink = getComputedStyle(box).color;
+      g.strokeStyle = ink; g.fillStyle = ink; g.lineWidth = 1;
+      ART[+c.getAttribute('data-w')](g, w, h, +c.getAttribute('data-p'), 0);
+    });
+  }
+  var resizeRaf = 0;
+  window.addEventListener('resize', function () { cancelAnimationFrame(resizeRaf); resizeRaf = requestAnimationFrame(function () { drawHero(); drawMaps(); }); });
+
+  /* ---------- Vistas ---------- */
+  function applyTheme() {
+    var t = S.settings.theme;
+    if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+    else if (origTheme) root.setAttribute('data-theme', origTheme);
+    else root.removeAttribute('data-theme');
+  }
+  function status(text) { return '<div class="status" role="status"><span class="dots"><i></i><i></i><i></i></span>' + esc(text) + '</div>'; }
+  function errLine() { return errMsg ? '<p class="err" role="alert">' + esc(errMsg) + '</p>' : ''; }
+  function orb(n) { return '<svg class="orb" width="' + n + '" height="' + n + '" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="currentColor"/><circle class="ring" cx="24" cy="24" r="16" fill="none" stroke="var(--bg)" stroke-width="1.2" stroke-dasharray="1.5 4.5" stroke-linecap="round"/><circle cx="24" cy="24" r="9.5" fill="none" stroke="var(--bg)" stroke-width="1"/><g class="orbit"><circle cx="24" cy="6.5" r="2.4" fill="var(--bg)"/></g><circle class="core" cx="24" cy="24" r="4.2" fill="var(--bg)"/></svg>'; }
+  function bar() { return '<div class="bar"><span class="wordmark">NEMYPLISH</span><span class="mono">' + pad(S.totalXp, 4) + ' XP</span></div>'; }
+
+  function hero() {
+    var w = WORLDS[S.world - 1];
+    var done = S.finished ? 5 : S.level + (S.phase === 'reward' ? 1 : 0);
+    var segs = '';
+    for (var i = 0; i < 5; i++) segs += '<i class="' + (i < done ? 'done' : (i === S.level && S.phase !== 'onboard' ? 'now' : '')) + '"></i>';
+    return '<header><div class="hero"><canvas id="hero" aria-hidden="true"></canvas>' +
+      '<div class="hero-row top"><span class="mono">Mundo ' + S.world + ' / 3</span><span class="mono">' + esc(w.name) + '</span></div>' +
+      '<div class="hero-row"><div><div class="mono">' + (S.finished ? 'Recorrido' : 'Nivel') + '</div><div class="big">' + (S.finished ? 'FIN' : pad(S.level + 1, 2)) + '</div></div>' +
+      '<div class="right"><div class="mono">XP</div><div class="big sm">' + pad(S.totalXp, 4) + '</div></div></div></div>' +
+      '<div class="segs" role="progressbar" aria-label="Progreso del mundo" aria-valuemin="0" aria-valuemax="5" aria-valuenow="' + done + '">' + segs + '</div></header>';
+  }
+  var counted = '';
+  function countUp() {
+    var key = S.world + '-' + S.level, el = document.getElementById('gain');
+    if (!el || counted === key || reduceMotion) { counted = key; return; }
+    counted = key;
+    var to = +el.getAttribute('data-v') || 0, t0 = performance.now();
+    (function tick(now) {
+      var k = Math.min(1, (now - t0) / 900), v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      var e = document.getElementById('gain');
+      if (!e) return;
+      e.textContent = '+' + v;
+      if (k < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+  function mapCard() {
+    var tiles = WORLDS.map(function (w, i) {
+      var n = i + 1, st = (S.finished || n < S.world) ? 'done' : n === S.world ? 'now' : 'todo';
+      var lv = st === 'done' ? 5 : st === 'now' ? S.level + (S.phase === 'reward' ? 1 : 0) : 0;
+      var pips = '';
+      for (var k = 0; k < 5; k++) pips += '<i class="' + (k < lv ? 'on' : '') + '"></i>';
+      var p = st === 'todo' ? 0.12 : 0.12 + 0.88 * (lv / 5);
+      return '<div class="world ' + st + '"><canvas class="wc" data-w="' + i + '" data-p="' + p.toFixed(2) + '" aria-hidden="true"></canvas>' +
+        '<div class="wl"><span class="mono">Mundo 0' + n + '</span><b>' + esc(w.name) + '</b><span class="pips" aria-label="' + lv + ' de 5 niveles">' + pips + '</span></div></div>';
+    }).join('');
+    return '<section class="block"><div class="mono muted">Tu recorrido</div><div class="map">' + tiles + '</div></section>';
+  }
+  function onboardCard() {
+    return '<section class="block"><div class="hello">' + orb(76) + '<div class="bubble">Hola, soy Nemy. Cuéntame qué quieres aprender y te acompaño nivel a nivel.</div></div>' +
+      '<h2>¿Qué quieres aprender o mejorar?</h2>' +
+      '<p class="muted small">Indica el tema. Nemy adaptará objetivos, pasos y lecciones, y al final te propondrá una masterclass diseñada para ti.</p>' +
+      '<input type="text" id="f-topic" maxlength="80" placeholder="Cualquier tema: inglés, guitarra, finanzas…" value="' + esc(draft.topic) + '" autocomplete="off">' +
+      '<div class="topics" aria-label="Ideas de tema">' + TOPICS.map(function (t) { return '<button class="tchip" type="button" data-act="pick" data-v="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
+      '<button class="btn" type="button" data-act="topic">Continuar</button></section>';
+  }
+  function setCard() {
+    return '<section class="block"><span class="chip mono">' + esc(S.topic) + '</span>' +
+      '<h2>¿Qué vas a lograr en este nivel?</h2>' +
+      '<input type="text" id="f-goal" maxlength="100" placeholder="Un objetivo concreto que puedas terminar" value="' + esc(draft.goal) + '" autocomplete="off"' + (busy ? ' disabled' : '') + '>' +
+      '<button class="link" type="button" data-act="suggest"' + (busy ? ' disabled' : '') + '>Sugiéreme uno</button>' +
+      (busy === 'suggest' ? status('Nemy está pensando un objetivo') : '') +
+      (busy === 'steps' ? status('Nemy está preparando tus pasos') : '') + errLine() +
+      '<button class="btn" type="button" data-act="start"' + (busy ? ' disabled' : '') + '>Empezar nivel</button></section>';
+  }
+  function activeCard() {
+    var items = S.steps.map(function (s, i) {
+      return '<li><label><input type="checkbox" data-step="' + i + '"' + (s.done ? ' checked' : '') + '><span>' + esc(s.t) + '</span></label></li>';
+    }).join('');
+    var finish = completing
+      ? '<label class="mono" for="f-note">Cuéntale a Nemy qué lograste</label>' +
+        '<textarea id="f-note" rows="3" maxlength="600" placeholder="Qué hiciste, cuánto tardaste, qué resultado obtuviste">' + esc(draft.note) + '</textarea>' +
+        (busy === 'eval' ? status('Nemy está revisando tu avance') : '') + errLine() +
+        '<div class="row"><button class="btn" type="button" data-act="submit"' + (busy ? ' disabled' : '') + '>Enviar a Nemy</button>' +
+        '<button class="btn quiet" type="button" data-act="toggle"' + (busy ? ' disabled' : '') + '>Volver</button></div>'
+      : '<button class="btn" type="button" data-act="toggle">Cumplí mi objetivo</button>';
+    return '<section class="block"><span class="chip mono">' + esc(S.topic) + '</span><div class="mono muted">Objetivo</div><h2>' + esc(S.goal) + '</h2>' +
+      '<ul class="steps">' + items + '</ul>' + finish + '</section>' + mentorCard();
+  }
+  function mentorCard() {
+    return '<section class="block"><div class="nemy">' + orb(44) + '<div><b>Habla con Nemy</b><span class="muted small">Pide una pista, no la solución</span></div></div>' +
+      '<div class="chatlog" id="chatlog" aria-live="polite"></div>' +
+      '<p class="err" id="chaterr" role="alert"></p>' +
+      '<div class="row"><input type="text" id="f-chat" maxlength="400" placeholder="Escribe tu duda" autocomplete="off" value="' + esc(draft.chat) + '">' +
+      '<button class="btn" type="button" id="chatbtn" data-act="send">Enviar</button></div></section>';
+  }
+  function rewardCard() {
+    var last = S.level === 4, lastWorld = S.world === 3;
+    var btn = !last ? '<button class="btn" type="button" data-act="next">Siguiente nivel</button>'
+      : lastWorld ? '<button class="btn" type="button" data-act="finish">Terminar el recorrido</button>'
+      : '<button class="btn" type="button" data-act="travel">Pasar al mundo ' + (S.world + 1) + ': ' + esc(WORLDS[S.world].name) + '</button>';
+    var L = S.lesson;
+    return '<section class="block"><div class="mono muted">Nivel ' + (S.level + 1) + ' completado</div>' +
+      '<div class="pop"><i></i><i></i><i></i><div class="mono">XP ganados</div><div class="gain" id="gain" data-v="' + S.gain + '">+' + S.gain + '</div></div>' +
+      (S.feedback ? '<p>' + esc(S.feedback) + '</p>' : '') +
+      (L ? '<div class="notice"><b>' + esc(L.title) + '</b><p class="small">' + esc(L.body) + '</p></div>' : '') +
+      (last && !lastWorld ? '<p class="muted small">Alcanzaste el punto máximo de este mundo.</p>' : '') + btn +
+      (!(last && lastWorld) ? '<button class="link" type="button" data-act="finish">Ya aprendí lo que quería</button>' : '') + '</section>';
+  }
+  function optGroup(key, label, list) {
+    var p = S.mprofile;
+    return '<div class="field"><span class="mono" id="lb-' + key + '">' + label + '</span><div class="opts" role="group" aria-labelledby="lb-' + key + '">' +
+      list.map(function (v) { return '<button type="button" class="opt" data-act="opt" data-k="' + key + '" data-v="' + esc(v) + '" aria-pressed="' + (p[key] === v) + '">' + esc(v) + '</button>'; }).join('') + '</div></div>';
+  }
+  function moduleItem(m, i) {
+    var ok = isEntitled();
+    var locked = i > 0 && !ok;
+    var head = '<div class="mod-head"><span class="mod-n">' + pad(i + 1, 2) + '</span><div><b>' + esc(m.t) + '</b><span class="muted small">' + esc(m.d) + '</span></div></div>';
+    var other = modBusy !== null && modBusy !== i;
+    var body = '';
+    if (modBusy === i) {
+      body = '<div class="reading" id="mb-' + i + '">' + paras(liveText) + '</div>' + status('Nemy está escribiendo tu lección') + '<button class="link" type="button" data-act="stop">Detener</button>';
+    } else if (m.body) {
+      body = '<div class="reading">' + paras(m.body) + '</div>' +
+        '<button class="link" type="button" data-act="lesson" data-i="' + i + '"' + (other ? ' disabled' : '') + '>Volver a generar esta lección</button>';
+    } else if (locked) {
+      body = '<span class="mono muted">Incluido en la masterclass completa</span>';
+    } else {
+      body = (i === 0 && !ok ? '<span class="mono">Lección de muestra gratuita</span>' : '') +
+        '<button class="btn quiet small-btn" type="button" data-act="lesson" data-i="' + i + '"' + (other ? ' disabled' : '') + '>' + (i === 0 && !ok ? 'Leer la lección de muestra' : 'Generar esta lección') + '</button>';
+    }
+    return '<li class="mod">' + head + body + '</li>';
+  }
+  function finalCard() {
+    var M = S.master;
+    var head = '<div class="mono muted">Final del recorrido · ' + pad(S.totalXp, 4) + ' XP · ' + esc(S.topic) + '</div>';
+    if (!M) {
+      return '<section class="block">' + head + '<h2>Diseñemos tu masterclass</h2>' +
+        '<p class="muted small">Nemy la construirá a partir de lo que hiciste en cada nivel y de las respuestas de abajo. Cuanto más concretas, más ajustada saldrá.</p>' +
+        optGroup('level', 'Tu nivel actual', LEVELS) + optGroup('time', 'Tiempo que puedes dedicarle', TIMES) +
+        '<div class="field"><label class="mono" for="f-aim">Qué quieres conseguir con ello</label>' +
+        '<input type="text" id="f-aim" maxlength="140" placeholder="Por ejemplo: mantener una conversación de trabajo" value="' + esc(S.mprofile.aim) + '" autocomplete="off"' + (busy ? ' disabled' : '') + '></div>' +
+        (busy === 'design' ? status('Nemy está diseñando tu masterclass') : '') + errLine() +
+        '<button class="btn" type="button" data-act="design"' + (busy ? ' disabled' : '') + '>Diseñar mi masterclass</button></section>' +
+        '<button class="foot" type="button" data-act="again">Empezar de nuevo con otro tema</button>';
+    }
+    var p = S.mprofile, n = S.log.length, ok = isEntitled();
+    var basis = 'Basada en tu nivel (' + p.level.toLowerCase() + '), tu tiempo (' + p.time + ')' + (n ? ' y ' + n + ' objetivo' + (n === 1 ? '' : 's') + ' que completaste' : ' y tus respuestas') + '.';
+    return '<section class="block">' + head + '<h2>' + esc(M.title) + '</h2><p>' + esc(M.promise) + '</p>' +
+      (M.why ? '<p class="why small">' + esc(M.why) + '</p>' : '') +
+      '<p class="muted small">' + esc(basis) + '</p>' +
+      '<ul class="mods">' + M.modules.map(moduleItem).join('') + '</ul>' + errLine() +
+      (payNotice ? '<div class="notice"><b>' + esc(payNotice) + '</b></div>' : '') +
+      '<div class="buy"><div class="price"><b>' + esc(MASTER_PRICE) + '</b><span class="mono muted">Pago único</span></div>' +
+      '<button class="btn" type="button" data-act="buy"' + (ok || busy === 'buy' ? ' disabled' : '') + '>' + (ok ? (DEMO ? 'Desbloqueada (simulado)' : 'Masterclass desbloqueada') : busy === 'buy' ? 'Abriendo el pago…' : 'Desbloquear masterclass completa') + '</button></div>' +
+      (DEMO && ok ? '<div class="notice"><b>Demostración sin pago real</b><p class="small">No se ha cobrado nada. En la versión con servidor, el pago se hace con Stripe y las lecciones se desbloquean al confirmarse.</p></div>' : '') +
+      '<button class="link" type="button" data-act="redo"' + (modBusy !== null ? ' disabled' : '') + '>Cambiar mis respuestas y rediseñar</button></section>' +
+      '<button class="foot" type="button" data-act="again">Empezar de nuevo con otro tema</button>';
+  }
+  function meView() {
+    var n = S.log.length;
+    var done = (S.world - 1) * 5 + S.level + (S.phase === 'reward' || S.finished ? 1 : 0);
+    var where = !S.topic ? 'Aún no has elegido un tema.' : S.finished ? 'Recorrido completado.' : 'Mundo ' + S.world + ' de 3 · Nivel ' + (S.level + 1) + ' de 5.';
+    var logHtml = n
+      ? '<ul class="log">' + S.log.slice().reverse().map(function (l) { return '<li><b>' + esc(l.goal) + '</b><span class="muted small">' + esc(l.feedback || 'Sin evaluación.') + '</span></li>'; }).join('') + '</ul>'
+      : '<p class="muted small">Todavía no has completado ningún objetivo. Aparecerán aquí con la evaluación de Nemy.</p>';
+    var mc;
+    if (S.master) mc = '<p><b>' + esc(S.master.title) + '</b></p><p class="muted small">' + (isEntitled() ? 'Desbloqueada.' : 'Pendiente de desbloquear.') + '</p><button class="btn quiet small-btn" type="button" data-act="gotolearn">Ver masterclass</button>';
+    else if (S.finished) mc = '<p class="muted small">Aún no la has diseñado.</p><button class="btn quiet small-btn" type="button" data-act="gotolearn">Diseñar mi masterclass</button>';
+    else mc = '<p class="muted small">Se ofrece al terminar tu recorrido y se diseña con tu historial.</p>';
+    return bar() + '<h1>' + esc(S.name || 'Personal') + '</h1>' +
+      '<section class="block"><div class="field"><label class="mono" for="f-name">Nombre</label>' +
+      '<input type="text" id="f-name" maxlength="40" placeholder="Cómo quieres que te llame Nemy" value="' + esc(S.name) + '" autocomplete="off"></div>' +
+      '<div class="stats"><div class="stat"><b>' + S.totalXp + '</b><span class="mono muted">XP</span></div><div class="stat"><b>' + done + '/15</b><span class="mono muted">Niveles</span></div><div class="stat"><b>' + n + '</b><span class="mono muted">Objetivos</span></div></div>' +
+      '<div class="field"><span class="mono muted">Tus 15 niveles</span><div class="lvgrid" aria-hidden="true">' + (function () { var g = ''; for (var i = 0; i < 15; i++) g += '<i class="' + (i < done ? 'on' : (i === done && S.topic && !S.finished ? 'cur' : '')) + '">' + pad(i + 1, 2) + '</i>'; return g; })() + '</div></div>' +
+      '<div class="field"><span class="mono muted">Tema</span><p>' + esc(S.topic || '—') + '</p><p class="muted small">' + esc(where) + '</p></div></section>' +
+      '<section class="block"><div class="mono muted">Historial de objetivos</div>' + logHtml + '</section>' +
+      '<section class="block"><div class="mono muted">Masterclass</div>' + mc + '</section>';
+  }
+  function seg(key, label, hint, list) {
+    return '<div class="setting"><span class="mono" id="lb-s-' + key + '">' + label + '</span>' + (hint ? '<p class="muted small">' + hint + '</p>' : '') +
+      '<div class="opts" role="group" aria-labelledby="lb-s-' + key + '">' +
+      list.map(function (o) { return '<button type="button" class="opt" data-act="set" data-k="' + key + '" data-v="' + o[0] + '" aria-pressed="' + (S.settings[key] === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function settingsView() {
+    var canExport = !DEMO || !!downloads;
+    return bar() + '<h1>Ajustes</h1>' +
+      '<section class="block">' + seg('theme', 'Apariencia', '', [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Oscuro']]) +
+      seg('tone', 'Tono de Nemy', 'Cómo te habla en el chat.', [['cercano', 'Cercano'], ['directo', 'Directo']]) +
+      seg('length', 'Longitud de las respuestas del chat', '', [['breve', 'Breve'], ['normal', 'Normal'], ['detallada', 'Detallada']]) + '</section>' +
+      '<section class="block"><div class="mono muted">Tus datos</div><p class="muted small">' + (DEMO ? 'Tu progreso se guarda en este navegador.' : 'Tu progreso se guarda en tu cuenta' + (session && session.user.email ? ' (' + esc(session.user.email) + ')' : '') + '.') + '</p>' +
+      (canExport ? '<button class="btn quiet small-btn" type="button" data-act="exportData">Descargar mi progreso</button>' : '') + errLine() +
+      (confirmReset
+        ? '<button class="btn small-btn danger" type="button" data-act="reset">Confirmar: borrar todo el progreso</button>'
+        : '<button class="btn quiet small-btn" type="button" data-act="askreset">Borrar mi progreso</button>') +
+      (!DEMO ? '<button class="link" type="button" data-act="signout">Cerrar sesión</button>' : '') + '</section>' +
+      '<section class="block"><div class="mono muted">Acerca de</div><p class="muted small">Nemyplish. Las respuestas y lecciones de Nemy las genera una IA y pueden contener errores.' + (DEMO ? ' Esta es una demostración: el pago de la masterclass no es real.' : '') + '</p></section>';
+  }
+  function authView() {
+    return '<section class="auth"><div><span class="wordmark">NEMYPLISH</span></div><h1>Aprende.<br>Sube de nivel.</h1>' +
+      '<p class="muted">Un mentor de IA que te marca objetivos, evalúa lo que haces y, al final, diseña una masterclass solo para ti.</p>' +
+      (authSent
+        ? '<div class="notice"><b>Revisa tu correo</b><p class="small">Te enviamos un enlace para entrar. Ábrelo en este mismo dispositivo.</p></div>'
+        : '<div class="field"><label class="mono" for="f-email">Tu correo</label><input type="email" id="f-email" placeholder="nombre@correo.com" autocomplete="email" value="' + esc(draft.email) + '"></div>' +
+          errLine() + '<button class="btn" type="button" data-act="login"' + (busy === 'login' ? ' disabled' : '') + '>' + (busy === 'login' ? 'Enviando…' : 'Entrar con enlace al correo') + '</button>' +
+          '<p class="muted small">Sin contraseñas. Si aún no tienes cuenta, se crea al entrar.</p>') + '</section>';
+  }
+  function setupView() {
+    return '<section class="auth"><div><span class="wordmark">NEMYPLISH</span></div><h1>Falta<br>configurar</h1>' +
+      '<p class="muted">Este archivo necesita la dirección y la clave pública de tu proyecto de Supabase. Se indican al generar el archivo con <span class="mono">npm run build:web</span> (consulta el README).</p></section>';
+  }
+  function offlineView() {
+    return '<section class="auth"><div><span class="wordmark">NEMYPLISH</span></div><h1>Sin<br>conexión</h1>' +
+      '<p class="muted">No se pudo cargar un componente necesario (Supabase). Comprueba tu conexión, desactiva bloqueadores de contenido y recarga la página.</p></section>';
+  }
+  function bootView() { return '<section class="auth">' + status('Cargando') + '</section>'; }
+
+  var ICONS = {
+    learn: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v16H4zM13 4h7v16h-7z"/></svg>',
+    me: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c.8-4 3.7-6 7.5-6s6.7 2 7.5 6"/></svg>',
+    settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>'
+  };
+  var TABS = [['learn', 'Aprender'], ['me', 'Personal'], ['settings', 'Ajustes']];
+  function setTab(v) { tab = v; confirmReset = false; errMsg = ''; render(); window.scrollTo(0, 0); }
+
+  function render() {
+    applyTheme();
+    var tb = document.getElementById('tabbar');
+    if (view !== 'app') {
+      tb.hidden = true;
+      app.innerHTML = view === 'setup' ? setupView() : view === 'offline' ? offlineView() : view === 'auth' ? authView() : bootView();
+      return;
+    }
+    tb.hidden = false;
+    var html;
+    if (tab === 'me') html = meView();
+    else if (tab === 'settings') html = settingsView();
+    else {
+      var body = S.finished ? finalCard() : S.phase === 'onboard' ? onboardCard() : S.phase === 'set' ? setCard() : S.phase === 'active' ? activeCard() : rewardCard();
+      var foot = S.finished ? '' : (confirmReset
+        ? '<button class="foot" type="button" data-act="reset">Confirmar: borrar progreso</button>'
+        : '<button class="foot" type="button" data-act="askreset">Reiniciar progreso</button>');
+      html = hero() + mapCard() + body + foot;
+    }
+    app.innerHTML = html;
+    if (tab !== 'learn') { heroSt = null; }
+    var tabs = document.getElementById('tabs');
+    if (!tabs.firstChild) tabs.innerHTML = TABS.map(function (t) { return '<button class="tab" type="button" data-tab="' + t[0] + '">' + ICONS[t[0]] + '<span>' + t[1] + '</span></button>'; }).join('');
+    tabs.querySelectorAll('.tab').forEach(function (b) {
+      if (b.getAttribute('data-tab') === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    if (tab === 'learn') { drawHero(); drawMaps(); if (S.phase === 'reward' && !S.finished) countUp(); if (S.phase === 'active' && !S.finished) renderChat(); }
+  }
+
+  /* ---------- Chat ---------- */
+  function renderChat() {
+    var el = document.getElementById('chatlog');
+    if (!el) return;
+    var html = chat.length ? '' : '<p class="muted small">Cuéntale dónde te atascas con tu objetivo y te orienta.</p>';
+    chat.forEach(function (m, i) {
+      var typing = chatBusy && i === chat.length - 1 && m.role === 'assistant' && !m.content;
+      html += '<div class="msg ' + m.role + '">' + (typing ? '<span class="dots"><i></i><i></i><i></i></span>' : esc(m.content)) + '</div>';
+    });
+    el.innerHTML = html;
+    el.scrollTop = el.scrollHeight;
+    var e2 = document.getElementById('chaterr'); if (e2) e2.textContent = chatErr;
+    var b = document.getElementById('chatbtn'); if (b) { b.textContent = chatBusy ? 'Detener' : 'Enviar'; b.setAttribute('data-act', chatBusy ? 'stop' : 'send'); }
+  }
+  async function sendChat() {
+    var input = document.getElementById('f-chat');
+    var text = (draft.chat || '').trim();
+    if (!text || chatBusy) return;
+    draft.chat = ''; if (input) input.value = ''; chatErr = '';
+    chat.push({ role: 'user', content: text });
+    var reply = { role: 'assistant', content: '' };
+    chat.push(reply);
+    chatBusy = true; ctl = new AbortController(); renderChat();
+    var msgs = chat.slice(0, -1).filter(function (m) { return m.content; }).map(function (m) { return { role: m.role, content: m.content }; });
+    try {
+      reply.content = await aiStream('chat', {
+        topic: S.topic, name: S.name, levelLabel: levelLabel(), goal: S.goal, steps: S.steps,
+        tone: S.settings.tone, length: S.settings.length, messages: msgs
+      }, ctl.signal, function (t) { reply.content = t; renderChat(); });
+    } catch (e) {
+      if (e && e.text) reply.content = e.text;
+      if (e && e.code !== 'cancelled') chatErr = copy(e && e.code);
+    } finally {
+      if (!reply.content) chat.pop();
+      chatBusy = false; ctl = null; renderChat();
+    }
+  }
+
+  /* ---------- Masterclass ---------- */
+  function lessonInput(i) {
+    return { index: i, topic: S.topic, name: S.name, mprofile: S.mprofile, log: S.log, xp: S.totalXp, master: S.master };
+  }
+  async function designMaster() {
+    var p = S.mprofile;
+    if ((p.aim || '').trim().length < 5) { errMsg = 'Cuéntale a Nemy qué quieres conseguir, en una frase.'; render(); var f = document.getElementById('f-aim'); if (f) f.focus(); return; }
+    busy = 'design'; errMsg = ''; save(); render();
+    var out = null;
+    try { out = await aiJson('design_master', { topic: S.topic, name: S.name, xp: S.totalXp, mprofile: S.mprofile, log: S.log }); }
+    catch (e) { errMsg = copy(e && e.code); }
+    if (out && out.title && Array.isArray(out.modules) && out.modules.length >= 3) {
+      S.master = {
+        v: 2, title: String(out.title).slice(0, 90), promise: String(out.promise || '').slice(0, 240), why: String(out.why || '').slice(0, 260),
+        modules: out.modules.slice(0, 5).map(function (m) { return { t: String((m && m.t) || '').slice(0, 80), d: String((m && m.d) || '').slice(0, 170), body: '' }; })
+      };
+      errMsg = '';
+    } else if (!errMsg) errMsg = copy('x');
+    busy = null; save(); render(); window.scrollTo(0, 0);
+  }
+  async function genLesson(i) {
+    var m = S.master && S.master.modules[i];
+    if (!m || modBusy !== null || (i > 0 && !isEntitled())) return;
+    modBusy = i; liveText = ''; errMsg = ''; ctl = new AbortController(); render();
+    var text = '';
+    try {
+      await flush(); // el servidor lee la masterclass guardada
+      text = await aiStream('lesson', lessonInput(i), ctl.signal, function (t) {
+        text = t; liveText = t;
+        var el = document.getElementById('mb-' + i); if (el) el.innerHTML = paras(t);
+      });
+    } catch (e) {
+      if (e && e.text) text = e.text;
+      if (e && e.code !== 'cancelled') errMsg = copy(e && e.code);
+    }
+    ctl = null; modBusy = null;
+    if (text) { m.body = text; save(); }
+    render();
+  }
+  async function checkEntitlement() {
+    if (DEMO || !sb || !session) return false;
+    var r = await sb.from('entitlements').select('id').eq('product', 'masterclass').limit(1);
+    entitled = !!(r.data && r.data.length);
+    return entitled;
+  }
+  async function buy() {
+    if (DEMO) { S.unlocked = true; save(); render(); return; }
+    busy = 'buy'; errMsg = ''; render();
+    try {
+      var r = await callFn('create-checkout', {});
+      if (r.already) { entitled = true; busy = null; render(); return; }
+      if (r.url) { window.location.href = r.url; return; }
+      throw { code: 'x' };
+    } catch (e) { errMsg = 'No se pudo abrir el pago. Inténtalo de nuevo.'; }
+    busy = null; render();
+  }
+  async function waitForPayment() {
+    payNotice = 'Confirmando tu pago…'; render();
+    for (var k = 0; k < 8; k++) {
+      if (await checkEntitlement()) { payNotice = 'Pago recibido. Masterclass desbloqueada.'; render(); return; }
+      await new Promise(function (r) { setTimeout(r, 2000); });
+    }
+    payNotice = 'El pago aún se está procesando. Recarga la página en un minuto.'; render();
+  }
+
+  /* ---------- Acciones ---------- */
+  function resetLevel() { S.phase = 'set'; S.goal = ''; S.steps = []; S.gain = 0; S.feedback = ''; S.lesson = null; chat = []; chatErr = ''; completing = false; draft.goal = ''; draft.note = ''; }
+  function fullReset() {
+    var keep = { name: S.name, settings: S.settings };
+    S = fresh(); S.name = keep.name; S.settings = keep.settings; tab = 'learn';
+    draft = { topic: '', goal: '', note: '', chat: '', email: draft.email }; chat = []; chatErr = ''; busy = null; modBusy = null; errMsg = ''; completing = false; confirmReset = false;
+    save(); render(); window.scrollTo(0, 0);
+  }
+  async function saveFile(name, text) {
+    if (downloads) return downloads.save({ filename: name, data: text });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  var acts = {
+    topic: function () {
+      var v = (draft.topic || '').trim();
+      if (!v) { var i = document.getElementById('f-topic'); if (i) i.focus(); return; }
+      S.topic = v; S.phase = 'set'; save(); render();
+    },
+    pick: function (b) { draft.topic = b.getAttribute('data-v') || ''; var i = document.getElementById('f-topic'); if (i) { i.value = draft.topic; i.focus(); } },
+    suggest: async function () {
+      busy = 'suggest'; errMsg = ''; render();
+      try {
+        var r = await aiJson('suggest', { topic: S.topic, name: S.name, levelLabel: levelLabel(), history: S.history.slice(-6) });
+        if (r && typeof r.goal === 'string' && r.goal.trim()) draft.goal = r.goal.trim().slice(0, 100); else errMsg = copy('x');
+      } catch (e) { errMsg = copy(e && e.code); }
+      busy = null; render();
+      var f = document.getElementById('f-goal'); if (f) f.focus();
+    },
+    start: async function () {
+      var g = (draft.goal || '').trim();
+      if (!g) { var f = document.getElementById('f-goal'); if (f) f.focus(); return; }
+      busy = 'steps'; errMsg = ''; S.goal = g; render();
+      var steps = FALLBACK_STEPS.slice();
+      try {
+        var r = await aiJson('steps', { topic: S.topic, name: S.name, levelLabel: levelLabel(), goal: g });
+        if (r && Array.isArray(r.steps) && r.steps.length >= 3) steps = r.steps.slice(0, 3).map(function (x) { return String(x).slice(0, 120); });
+      } catch (e) { errMsg = ''; }
+      S.steps = steps.map(function (t) { return { t: t, done: false }; });
+      S.history = S.history.concat(g).slice(-12);
+      S.phase = 'active'; busy = null; chat = []; chatErr = ''; completing = false; draft.note = ''; draft.goal = '';
+      save(); render();
+    },
+    toggle: function () { completing = !completing; errMsg = ''; render(); },
+    submit: async function () {
+      var note = (draft.note || '').trim();
+      if (note.length < 12) { errMsg = 'Escribe al menos una frase sobre lo que lograste.'; render(); return; }
+      busy = 'eval'; errMsg = ''; render();
+      var doneN = S.steps.filter(function (s) { return s.done; }).length;
+      var out = null;
+      try { out = await aiJson('evaluate', { topic: S.topic, name: S.name, levelLabel: levelLabel(), goal: S.goal, note: note, steps: S.steps }); }
+      catch (e) { errMsg = copy(e && e.code); }
+      var gain, feedback, lesson;
+      if (out && typeof out.xp === 'number' && out.lesson && out.lesson.title) {
+        gain = Math.max(30, Math.min(100, Math.round(out.xp)));
+        feedback = String(out.feedback || '').slice(0, 400);
+        lesson = { title: String(out.lesson.title).slice(0, 80), body: String(out.lesson.body || '').slice(0, 500) };
+      } else {
+        var fl = FALLBACK_LESSONS[(globalLevel() - 1) % FALLBACK_LESSONS.length];
+        gain = 60 + 10 * doneN; feedback = 'Nemy no estuvo disponible, así que el XP se calculó por los pasos marcados.'; lesson = { title: fl[0], body: fl[1] };
+      }
+      S.log = S.log.concat({ goal: S.goal.slice(0, 100), note: note.slice(0, 300), feedback: feedback.slice(0, 200) }).slice(-15);
+      S.gain = gain; S.feedback = feedback; S.lesson = lesson; S.totalXp += gain; S.phase = 'reward';
+      busy = null; errMsg = ''; completing = false; draft.note = '';
+      save(); render(); window.scrollTo(0, 0);
+    },
+    next: function () { S.level += 1; resetLevel(); save(); render(); window.scrollTo(0, 0); },
+    finish: function () { S.finished = true; errMsg = ''; save(); render(); window.scrollTo(0, 0); },
+    travel: function () {
+      if (traveling) return; traveling = true;
+      var nxt = WORLDS[S.world];
+      var ov = document.createElement('div'); ov.className = 'travel'; ov.setAttribute('role', 'status');
+      ov.innerHTML = '<div><div class="mono">Mundo ' + (S.world + 1) + ' / 3 · ' + esc(nxt.sub) + '</div><div class="big">' + esc(nxt.name.toUpperCase()) + '</div></div>';
+      document.body.appendChild(ov);
+      setTimeout(function () {
+        S.world += 1; S.level = 0; resetLevel(); save(); render(); window.scrollTo(0, 0);
+        ov.style.transition = 'opacity .5s'; ov.style.opacity = '0';
+        setTimeout(function () { ov.remove(); traveling = false; }, 550);
+      }, 1300);
+    },
+    opt: function (b) { S.mprofile[b.getAttribute('data-k')] = b.getAttribute('data-v'); save(); render(); },
+    design: function () { designMaster(); },
+    buy: function () { buy(); },
+    redo: function () { S.master = null; errMsg = ''; save(); render(); window.scrollTo(0, 0); },
+    lesson: function (b) { genLesson(+b.getAttribute('data-i')); },
+    set: function (b) { S.settings[b.getAttribute('data-k')] = b.getAttribute('data-v'); save(); render(); },
+    gotolearn: function () { setTab('learn'); },
+    exportData: async function () {
+      var data = {
+        app: 'Nemyplish', exportedAt: new Date().toISOString(), name: S.name, topic: S.topic, xp: S.totalXp,
+        world: S.world, level: S.level + 1, finished: S.finished, goals: S.log,
+        masterclass: S.master ? { title: S.master.title, promise: S.master.promise, modules: S.master.modules } : null
+      };
+      try { await saveFile('nemyplish-progreso.json', JSON.stringify(data, null, 2)); errMsg = ''; }
+      catch (e) { if (e && e.code !== 'declined') { errMsg = 'No se pudo guardar el archivo. Inténtalo de nuevo.'; render(); } }
+    },
+    login: async function () {
+      var email = (draft.email || '').trim();
+      if (!/^\S+@\S+\.\S+$/.test(email)) { errMsg = 'Escribe un correo válido.'; render(); return; }
+      busy = 'login'; errMsg = ''; render();
+      var r = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+      busy = null;
+      if (r.error) errMsg = 'No se pudo enviar el enlace. Revisa el correo e inténtalo de nuevo.'; else authSent = true;
+      render();
+    },
+    signout: async function () { if (sb) await sb.auth.signOut(); },
+    again: function () { fullReset(); },
+    askreset: function () { confirmReset = true; render(); },
+    reset: function () { fullReset(); },
+    send: function () { sendChat(); },
+    stop: function () { if (ctl) ctl.abort(); }
+  };
+
+  app.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (!b || b.disabled) return;
+    var act = b.getAttribute('data-act');
+    if (act !== 'askreset' && act !== 'reset' && confirmReset) confirmReset = false;
+    var fn = acts[act]; if (fn) fn(b);
+  });
+  app.addEventListener('input', function (e) {
+    var id = e.target.id;
+    if (id === 'f-topic') draft.topic = e.target.value;
+    else if (id === 'f-goal') draft.goal = e.target.value;
+    else if (id === 'f-note') draft.note = e.target.value;
+    else if (id === 'f-chat') draft.chat = e.target.value;
+    else if (id === 'f-email') draft.email = e.target.value;
+    else if (id === 'f-aim') S.mprofile.aim = e.target.value;
+    else if (id === 'f-name') S.name = e.target.value;
+  });
+  app.addEventListener('change', function (e) {
+    if (e.target.id === 'f-name') { save(); return; }
+    var i = e.target.getAttribute && e.target.getAttribute('data-step');
+    if (i !== null && i !== undefined && S.steps[+i]) { S.steps[+i].done = e.target.checked; save(); }
+  });
+  app.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    var id = e.target.id;
+    if (id === 'f-topic') { e.preventDefault(); acts.topic(); }
+    else if (id === 'f-goal') { e.preventDefault(); acts.start(); }
+    else if (id === 'f-chat') { e.preventDefault(); sendChat(); }
+    else if (id === 'f-aim') { e.preventDefault(); designMaster(); }
+    else if (id === 'f-email') { e.preventDefault(); acts.login(); }
+  });
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]');
+    if (b) setTab(b.getAttribute('data-tab'));
+  });
+
+  /* ---------- Arranque ---------- */
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script'); s.src = src; s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+    });
+  }
+  async function afterLogin() {
+    var uid = session.user.id;
+    var r = await sb.from('app_state').select('state').eq('user_id', uid).maybeSingle();
+    if (r.data && r.data.state) S = normalize(r.data.state); else { S = fresh(); saveNow(); }
+    await checkEntitlement();
+    view = 'app'; render();
+    var q = new URLSearchParams(window.location.search);
+    if (q.get('paid') === '1') {
+      history.replaceState(null, '', window.location.pathname);
+      tab = 'learn';
+      if (!entitled) await waitForPayment(); else { payNotice = 'Pago recibido. Masterclass desbloqueada.'; render(); }
+    } else if (q.get('paid') === '0') {
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }
+  async function bootBackend() {
+    if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || CONFIG.SUPABASE_URL.indexOf('__') === 0) { view = 'setup'; render(); return; }
+    render();
+    try { await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js'); }
+    catch (e) { view = 'offline'; render(); return; }
+    sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    var cur = await sb.auth.getSession();
+    session = cur.data.session;
+    sb.auth.onAuthStateChange(function (ev, s) {
+      var had = !!session;
+      session = s;
+      if (s && !had) afterLogin();
+      else if (!s && had) { S = fresh(); entitled = false; chat = []; view = 'auth'; authSent = false; render(); }
+    });
+    if (session) await afterLogin(); else { view = 'auth'; render(); }
+  }
+  async function bootDemo() {
+    render();
+    try {
+      sample = await window.claude.use('sample');
+      downloads = await window.claude.use('downloads');
+      if (tab === 'settings') render();
+    } catch (e) {}
+  }
+  if (DEMO) bootDemo(); else bootBackend();
+})();
+</script>
+
+</body>
+</html>
