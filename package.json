@@ -1,0 +1,9 @@
+{
+  "name": "nemyplish",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/backend.test.mjs",
+    "build:web": "node scripts/build-web.mjs"
+  }
+}
